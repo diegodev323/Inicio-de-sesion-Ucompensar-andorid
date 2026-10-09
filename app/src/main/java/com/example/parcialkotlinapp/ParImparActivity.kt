@@ -4,21 +4,28 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import com.example.parcialkotlinapp.util.aplicarInsetsDelSistema
+import com.google.android.material.appbar.MaterialToolbar
 
 class ParImparActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        enableEdgeToEdge()
         setContentView(R.layout.activity_par_impar)
+        findViewById<android.view.View>(R.id.rootParImpar).aplicarInsetsDelSistema()
+
+        // FLECHA SUPERIOR: regresa a la pantalla principal
+        findViewById<MaterialToolbar>(R.id.toolbar)
+            .setNavigationOnClickListener { finish() }
 
         // Conectamos Kotlin con los componentes del XML
         val etNumero = findViewById<EditText>(R.id.etNumero)
         val btnValidar = findViewById<Button>(R.id.btnValidar)
         val tvResultado = findViewById<TextView>(R.id.tvResultado)
-        val btnVolver = findViewById<Button>(R.id.btnVolver)
-
 
         btnValidar.setOnClickListener {
 
@@ -44,14 +51,6 @@ class ParImparActivity : AppCompatActivity() {
             } else {
                 tvResultado.text = "$numero es IMPAR"
             }
-        }
-
-        // =====================================
-        // VOLVER AL LOGIN
-        // =====================================
-
-        btnVolver.setOnClickListener {
-            finish()
         }
     }
 }

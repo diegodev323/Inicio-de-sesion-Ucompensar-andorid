@@ -5,7 +5,10 @@ data class Usuario(
     val nombre: String,
     val apellido: String,
     val correo: String,
-    val edad: Int,
-    val activo: Boolean,
-    val fechaCreacion: String
+    val fechaNacimiento: String? = null,
+    val edad: Int = 0,
+    val universidad: String? = null,
+    val semestre: Int = 0,
+    val activo: Boolean = true,
+    val fechaCreacion: String? = null
 )

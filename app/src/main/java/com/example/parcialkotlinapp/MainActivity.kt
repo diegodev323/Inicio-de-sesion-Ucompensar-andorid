@@ -5,101 +5,100 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import com.example.parcialkotlinapp.util.FechaUtils
+import com.example.parcialkotlinapp.util.aplicarInsetsDelSistema
+import com.google.android.material.appbar.MaterialToolbar
 import java.util.Calendar
 
 class MainActivity : AppCompatActivity() {
 
+    companion object {
+        const val EXTRA_NOMBRE = "nombreUsuario"
+        const val EXTRA_APELLIDO = "apellidoUsuario"
+        const val EXTRA_CORREO = "correoUsuario"
+    }
+
+    private var nombreUsuario: String = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        enableEdgeToEdge()
-
-        setContentView(R.layout.activity_main)
-
-        val tvSaludo =findViewById<TextView>(R.id.tvSaludo)
-
-        // Nombre recibido desde LoginActivity
-        val  nombreUsuario = intent.getStringExtra(
-            "nombreUsuario"
-        ) ?: "Usuario"
-
-        //Hora Actual del dispositivo
-        val horaActual =
-            Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-
-        //Determinar saludo
-        var saludo = when(horaActual){
-
-            in 5..11 ->
-                "Buenos días"
-
-            in 12..17 ->
-                "Buenas tardes"
-
-            else ->
-                "Buenas noches"
+        // El nombre solo puede venir del Login. Si no hay sesión, volver al Login.
+        val nombre = intent.getStringExtra(EXTRA_NOMBRE)
+        if (nombre.isNullOrBlank()) {
+            irAlLogin()
+            return
         }
+        nombreUsuario = nombre
 
-        //Mostrar saludo personalizado
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_main)
+        findViewById<android.view.View>(R.id.main).aplicarInsetsDelSistema()
 
-        tvSaludo.text = "$saludo, $nombreUsuario"
-
-        // Manejo de los bordes de la pantalla
-        ViewCompat.setOnApplyWindowInsetsListener(
-            findViewById(R.id.main)
-        ) { v, insets ->
-
-            val systemBars =
-                insets.getInsets(
-                    WindowInsetsCompat.Type.systemBars()
-                )
-
-            v.setPadding(
-                systemBars.left,
-                systemBars.top,
-                systemBars.right,
-                systemBars.bottom
-            )
-
-            insets
+        // =====================================
+        // BARRA SUPERIOR: ícono de cerrar sesión
+        // =====================================
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+        toolbar.inflateMenu(R.menu.menu_main)
+        toolbar.setOnMenuItemClickListener { item ->
+            if (item.itemId == R.id.action_logout) {
+                confirmarCierreSesion()
+                true
+            } else {
+                false
+            }
         }
 
         // =====================================
         // BOTÓN EJERCICIO PAR O IMPAR
         // =====================================
-
-        val btnParImpar =
-            findViewById<Button>(R.id.btnParImpar)
-
-        btnParImpar.setOnClickListener {
-
-            val intent = Intent(
-                this,
-                ParImparActivity::class.java
-            )
-
-            startActivity(intent)
+        findViewById<Button>(R.id.btnParImpar).setOnClickListener {
+            startActivity(Intent(this, ParImparActivity::class.java))
         }
+    }
 
-        // =====================================
-        // VOLVER AL LOGIN
-        // =====================================
+    override fun onResume() {
+        super.onResume()
+        if (nombreUsuario.isNotEmpty()) mostrarSaludo()
+    }
 
-        val btnVolver2 =
-            findViewById<Button>(R.id.btnVolver2)
+    // =====================================
+    // SALUDO SEGÚN LA HORA DEL DISPOSITIVO
+    // 05:00-11:59 Buenos días | 12:00-17:59 Buenas tardes | 18:00-04:59 Buenas noches
+    // =====================================
+    private fun mostrarSaludo() {
+        val hora = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        findViewById<TextView>(R.id.tvSaludo).text =
+            "${FechaUtils.saludoSegunHora(hora)}, $nombreUsuario"
+    }
 
-        btnVolver2.setOnClickListener {
+    // =====================================
+    // CIERRE DE SESIÓN CON CONFIRMACIÓN
+    // =====================================
+    private fun confirmarCierreSesion() {
+        AlertDialog.Builder(this)
+            .setTitle("Cerrar sesión")
+            .setMessage("¿Está seguro de que desea cerrar sesión?")
+            .setNegativeButton("CANCELAR") { dialog, _ ->
+                // Solo cierra el cuadro; el usuario sigue en la pantalla principal
+                dialog.dismiss()
+            }
+            .setPositiveButton("SALIR") { _, _ ->
+                irAlLogin()
+            }
+            .show()
+    }
 
-            val intent = Intent(
-                this,
-                LoginActivity::class.java
-            )
-
-            startActivity(intent)
-        }
-
+    /**
+     * Regresa al Login borrando todo el historial de pantallas, para que el
+     * botón Atrás no permita volver a una pantalla de la sesión anterior.
+     */
+    private fun irAlLogin() {
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        startActivity(intent)
+        finish()
     }
 }
